@@ -1,3 +1,3 @@
 # MedSync
 
-Nefi quote: "Do not pray for an easy life, pray for the strength to endure a difficult one". -Bruce Lee
+"Quality is not an act, it is a habit." – Austin's quote
