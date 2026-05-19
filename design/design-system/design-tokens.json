@@ -1,0 +1,95 @@
+{
+  "colors": {
+    "primary": {
+      "main": "#0066CC",
+      "light": "#E6F0FF",
+      "dark": "#0052A3",
+      "darker": "#003D7A"
+    },
+    "status": {
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "danger": "#EF4444",
+      "info": "#06B6D4"
+    },
+    "neutral": {
+      "dark": "#1F2937",
+      "gray": "#6B7280",
+      "light": "#F3F4F6",
+      "border": "#E5E7EB",
+      "white": "#FFFFFF"
+    },
+    "backgrounds": {
+      "success": "#ECFDF5",
+      "warning": "#FFFBEB",
+      "danger": "#FEE2E2",
+      "info": "#CFFAFE"
+    },
+    "text": {
+      "success": "#065F46",
+      "warning": "#92400E",
+      "danger": "#991B1B",
+      "info": "#164E63"
+    }
+  },
+  "typography": {
+    "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    "sizes": {
+      "h1": "32px",
+      "h2": "24px",
+      "h3": "20px",
+      "bodyLarge": "16px",
+      "bodyRegular": "14px",
+      "caption": "12px",
+      "button": "14px"
+    },
+    "weights": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "lineHeights": {
+      "h1": "40px",
+      "h2": "32px",
+      "h3": "28px",
+      "bodyLarge": "24px",
+      "bodyRegular": "20px",
+      "caption": "16px",
+      "button": "20px"
+    }
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "12px",
+    "lg": "16px",
+    "xl": "20px",
+    "2xl": "24px",
+    "3xl": "32px",
+    "4xl": "40px",
+    "5xl": "48px"
+  },
+  "borderRadius": {
+    "small": "4px",
+    "medium": "8px",
+    "large": "12px",
+    "full": "20px"
+  },
+  "shadows": {
+    "elevation1": "0 1px 3px rgba(0, 0, 0, 0.1)",
+    "elevation2": "0 4px 6px rgba(0, 0, 0, 0.1)",
+    "elevation3": "0 20px 25px rgba(0, 0, 0, 0.1)",
+    "elevation4": "0 10px 15px rgba(0, 0, 0, 0.1)"
+  },
+  "transitions": {
+    "short": "200ms cubic-bezier(0.4, 0, 0.2, 1)",
+    "medium": "300ms cubic-bezier(0.4, 0, 0.2, 1)",
+    "long": "500ms cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  "breakpoints": {
+    "mobile": "320px",
+    "tablet": "480px",
+    "desktop": "1024px"
+  }
+}
