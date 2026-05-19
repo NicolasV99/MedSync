@@ -1,8 +1,8 @@
 # MedSync Design System
 
-## 1. Palette de Couleurs
+## 1. Color Palette
 
-### Couleurs Primaires
+### Primary Colors
 - **Primary Blue**: `#0066CC` (RGB: 0, 102, 204)
   - Usage: Buttons, links, CTAs, active states, key actions
   - Rationale: Professional, trustworthy, medical context
@@ -10,7 +10,7 @@
 - **Primary Light Blue**: `#E6F0FF` (RGB: 230, 240, 255)
   - Usage: Backgrounds, hover states, secondary containers
 
-### Couleurs de Statut
+### Status Colors
 - **Success Green**: `#10B981` (RGB: 16, 185, 145)
   - Usage: Appointment confirmed, action completed, positive feedback
 
@@ -23,7 +23,7 @@
 - **Info Cyan**: `#06B6D4` (RGB: 6, 182, 212)
   - Usage: Notifications, informational messages, reminders
 
-### Couleurs Neutres
+### Neutral Colors
 - **Dark Charcoal**: `#1F2937` (RGB: 31, 41, 55)
   - Usage: Primary text, headers, dark mode text
 
@@ -38,7 +38,7 @@
 
 ---
 
-## 2. Typographie
+## 2. Typography
 
 ### Font Family
 - **Primary Font**: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
@@ -58,7 +58,7 @@
 
 ---
 
-## 3. Espacements
+## 3. Spacing
 
 ### Spacing Scale
 ```
@@ -87,7 +87,7 @@
 
 ---
 
-## 4. Componentes Reutilizáveis
+## 4. Reusable Components
 
 ### 4.1 Buttons
 
@@ -277,7 +277,7 @@ Cell Padding: 16px
 
 ---
 
-## 6. Elevations / Shadows
+## 6. Elevations & Shadows
 
 ```
 Elevation 1 (Subtle): 0 1px 3px rgba(0, 0, 0, 0.1)
