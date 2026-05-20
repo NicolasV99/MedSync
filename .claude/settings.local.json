@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(anthropic-skills:pdf)",
+      "Skill(anthropic-skills:pdf:*)",
+      "Skill(anthropic-skills:docx)",
+      "Skill(anthropic-skills:docx:*)",
+      "Read(//c/Users/legol/OneDrive/Escritorio/BYU/CSE 499 - Senior Project/**)",
+      "Bash(python -c ' *)",
+      "Bash(npm --version)",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/next/package.json'\\).version\\)\")",
+      "Bash(npm run *)"
+    ]
+  }
+}
