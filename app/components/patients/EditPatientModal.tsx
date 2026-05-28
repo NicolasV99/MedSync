@@ -4,6 +4,22 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Patient } from "./PatientTable";
 
+function toInputDate(value: unknown): string {
+  if (!value) return "";
+
+  if (typeof value === "string") {
+    // Handles ISO strings and plain YYYY-MM-DD values.
+    return value.includes("T") ? value.split("T")[0] : value;
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().split("T")[0];
+  }
+
+  return "";
+}
+
+// Edits an existing patient in a modal and updates it via the PUT endpoint.
 export function EditPatientModal({
   patient,
   onClose,
@@ -16,7 +32,7 @@ export function EditPatientModal({
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     patient_name: patient.patient_name,
-    dob: patient.dob ? patient.dob.split("T")[0] : "",
+    dob: toInputDate(patient.dob),
     email: patient.email ?? "",
     phone: patient.phone ?? "",
   });
@@ -45,7 +61,9 @@ export function EditPatientModal({
       router.refresh();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not update patient.");
+      setError(
+        err instanceof Error ? err.message : "Could not update patient.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -57,12 +75,29 @@ export function EditPatientModal({
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-neutral-dark">Edit Patient</h2>
-            <p className="text-xs text-neutral-gray mt-0.5">Update {patient.patient_name}&apos;s information.</p>
+            <h2 className="text-lg font-semibold text-neutral-dark">
+              Edit Patient
+            </h2>
+            <p className="text-xs text-neutral-gray mt-0.5">
+              Update {patient.patient_name}&apos;s information.
+            </p>
           </div>
-          <button onClick={onClose} className="text-neutral-gray hover:text-neutral-dark">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <button
+            onClick={onClose}
+            className="text-neutral-gray hover:text-neutral-dark"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -75,7 +110,12 @@ export function EditPatientModal({
 
         <form className="space-y-3" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="edit_name" className="block text-sm font-medium text-neutral-dark mb-1.5">Name *</label>
+            <label
+              htmlFor="edit_name"
+              className="block text-sm font-medium text-neutral-dark mb-1.5"
+            >
+              Name *
+            </label>
             <input
               id="edit_name"
               required
@@ -85,7 +125,12 @@ export function EditPatientModal({
             />
           </div>
           <div>
-            <label htmlFor="edit_dob" className="block text-sm font-medium text-neutral-dark mb-1.5">Date of Birth *</label>
+            <label
+              htmlFor="edit_dob"
+              className="block text-sm font-medium text-neutral-dark mb-1.5"
+            >
+              Date of Birth *
+            </label>
             <input
               id="edit_dob"
               type="date"
@@ -96,7 +141,12 @@ export function EditPatientModal({
             />
           </div>
           <div>
-            <label htmlFor="edit_email" className="block text-sm font-medium text-neutral-dark mb-1.5">Email</label>
+            <label
+              htmlFor="edit_email"
+              className="block text-sm font-medium text-neutral-dark mb-1.5"
+            >
+              Email
+            </label>
             <input
               id="edit_email"
               type="email"
@@ -107,7 +157,12 @@ export function EditPatientModal({
             />
           </div>
           <div>
-            <label htmlFor="edit_phone" className="block text-sm font-medium text-neutral-dark mb-1.5">Phone</label>
+            <label
+              htmlFor="edit_phone"
+              className="block text-sm font-medium text-neutral-dark mb-1.5"
+            >
+              Phone
+            </label>
             <input
               id="edit_phone"
               value={formData.phone}
