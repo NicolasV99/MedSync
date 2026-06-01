@@ -42,13 +42,19 @@ export async function GET(_request: Request, context: RouteContext) {
     );
 
     if (!result.rows[0]) {
-      return NextResponse.json({ error: "Patient not found." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Patient not found." },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({ patient: result.rows[0] });
   } catch (error) {
     console.error("Failed to fetch patient", error);
-    return NextResponse.json({ error: "Failed to fetch patient." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch patient." },
+      { status: 500 },
+    );
   }
 }
 
@@ -92,7 +98,10 @@ export async function PUT(request: Request, context: RouteContext) {
     );
 
     if (!result.rows[0]) {
-      return NextResponse.json({ error: "Patient not found." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Patient not found." },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({ patient: result.rows[0] });
@@ -139,10 +148,16 @@ export async function DELETE(_request: Request, context: RouteContext) {
     );
 
     if (!result.rows[0]) {
-      return NextResponse.json({ error: "Patient not found." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Patient not found." },
+        { status: 404 },
+      );
     }
 
-    return NextResponse.json({ ok: true, patient_id: result.rows[0].patient_id });
+    return NextResponse.json({
+      ok: true,
+      patient_id: result.rows[0].patient_id,
+    });
   } catch (error: unknown) {
     const pgError = error as {
       message?: string;
