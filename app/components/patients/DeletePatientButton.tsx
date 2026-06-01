@@ -4,6 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Patient } from "./PatientTable";
 
+async function getErrorMessage(response: Response, fallback: string) {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    const payload = (await response.json()) as { error?: string };
+    return payload.error ?? fallback;
+  }
+
+  const text = await response.text();
+  return text ? `${fallback} (${response.status})` : fallback;
+}
+
 export function DeletePatientButton({
   patient,
   onClose,
@@ -25,8 +37,7 @@ export function DeletePatientButton({
       });
 
       if (!res.ok) {
-        const payload = (await res.json()) as { error?: string };
-        throw new Error(payload.error ?? "Failed to delete patient.");
+        throw new Error(await getErrorMessage(res, "Failed to delete patient."));
       }
 
       router.refresh();
