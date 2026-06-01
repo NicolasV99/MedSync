@@ -17,6 +17,7 @@ const initialFormState: NewPatientForm = {
   phone: "",
 };
 
+// Creates a new patient from a modal form and refreshes the dashboard list.
 export function AddPatientButton() {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
