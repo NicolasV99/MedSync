@@ -6,7 +6,7 @@ type PatientCountRow = {
   total_patients: string;
 };
 
-// Gets the current number of patient records from the database for the dashboard stat.
+// Gets the current number of patient records from the database for the dashboard.
 async function getTotalPatients() {
   try {
     const result = await getPool().query<PatientCountRow>(
