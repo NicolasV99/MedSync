@@ -102,6 +102,13 @@ export default function LoginPage() {
                 id="email"
                 name="email"
                 type="email"
+                value={loginForm.email}
+                onChange={(event) =>
+                  setLoginForm((current) => ({
+                    ...current,
+                    email: event.target.value,
+                  }))
+                }
                 placeholder="doctor@clinic.com"
                 required
                 className="w-full px-3 py-2.5 text-sm border border-neutral-border rounded-lg outline-none
@@ -128,6 +135,13 @@ export default function LoginPage() {
                 id="password"
                 name="password"
                 type="password"
+                value={loginForm.password}
+                onChange={(event) =>
+                  setLoginForm((current) => ({
+                    ...current,
+                    password: event.target.value,
+                  }))
+                }
                 placeholder="••••••••"
                 required
                 className="w-full px-3 py-2.5 text-sm border border-neutral-border rounded-lg outline-none
