@@ -1,4 +1,4 @@
-import { getPatients } from "@/lib/patients";
+import { getPool } from "@/lib/db";
 
 const stats = [
   {
@@ -21,18 +21,31 @@ const stats = [
   },
 ];
 
+type TotalPatientsRow = {
+  total: string;
+};
+
 export default async function DashboardPage() {
-  const { patients } = await getPatients();
+  let totalPatients = "0";
+
+  try {
+    const result = await getPool().query<TotalPatientsRow>(
+      `SELECT COUNT(*)::text AS total FROM patients`,
+    );
+    totalPatients = result.rows[0]?.total ?? "0";
+  } catch (error) {
+    console.error("Failed to fetch total patients", error);
+  }
+
   const dashboardStats = [
     {
       label: "Total Patients",
-      value: patients.length.toString(),
+      value: totalPatients,
       icon: "👥",
       color: "bg-primary-light text-primary",
     },
     ...stats,
   ];
-
   return (
     <div className="space-y-6">
       <div>

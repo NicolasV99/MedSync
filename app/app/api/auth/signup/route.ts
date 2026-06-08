@@ -1,117 +1,85 @@
-import { randomBytes, scrypt as scryptCallback } from "node:crypto";
-import { promisify } from "node:util";
 import { NextResponse } from "next/server";
 
+import { hashPassword, isStrongPassword } from "@/lib/auth";
 import { getPool } from "@/lib/db";
-
-// Promisified scrypt for async/await password hashing.
-const scrypt = promisify(scryptCallback);
-
-type SignUpBody = {
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  password?: string;
-};
 
 type UserRow = {
   id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: string;
 };
 
-// Creates a salted hash in a storable format: scrypt$salt$hash.
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const hash = (await scrypt(password, salt, 64)) as Buffer;
-  return `scrypt$${salt}$${hash.toString("hex")}`;
-}
+function splitFullName(fullName: string) {
+  // Split a full name into first and last names for the current DB schema.
+  const trimmed = fullName.trim();
+  const [firstName, ...rest] = trimmed.split(/\s+/);
+  const lastName = rest.join(" ");
 
-// Quick uniqueness check to provide a friendly 409 response before insert.
-async function emailExists(email: string) {
-  const result = await getPool().query<{ id: number }>(
-    "SELECT id FROM users WHERE email = $1 LIMIT 1",
-    [email],
-  );
-
-  return result.rows.length > 0;
+  return {
+    firstName: firstName || "",
+    lastName: lastName || "-",
+  };
 }
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as SignUpBody;
-
-    // Normalize user-provided fields before server-side validation.
-    const firstName = body.first_name?.trim();
-    const lastName = body.last_name?.trim();
-    const email = body.email?.trim().toLowerCase();
-    const password = body.password ?? "";
-
-    // Required fields validation.
-    if (!firstName || !lastName || !email || !password) {
-      return NextResponse.json(
-        { error: "first_name, last_name, email and password are required." },
-        { status: 400 },
-      );
-    }
-
-    // Minimum password policy.
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: "Password must be at least 8 characters." },
-        { status: 400 },
-      );
-    }
-
-    // Avoid duplicate accounts by email.
-    if (await emailExists(email)) {
-      return NextResponse.json(
-        { error: "An account with this email already exists." },
-        { status: 409 },
-      );
-    }
-
-    const passwordHash = await hashPassword(password);
-
-    // New users are created with default staff role.
-    await getPool().query<UserRow>(
-      `INSERT INTO users (first_name, last_name, email, password_hash, role)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id`,
-      [firstName, lastName, email, passwordHash, "staff"],
-    );
-
-    return NextResponse.json(
-      { message: "Account created successfully." },
-      { status: 201 },
-    );
-  } catch (error: unknown) {
-    const pgError = error as {
-      code?: string;
-      message?: string;
+    const body = (await request.json()) as {
+      fullName?: string;
+      email?: string;
+      password?: string;
+      role?: string;
     };
 
-    // Safety net for race conditions if duplicate email is inserted concurrently.
-    if (pgError.code === "23505") {
+    const fullName = body.fullName?.trim() || "";
+    const email = body.email?.trim().toLowerCase() || "";
+    const password = body.password || "";
+    const role = body.role?.trim() || "staff";
+
+    if (!fullName || !email || !password) {
+      // Required fields validation.
       return NextResponse.json(
-        { error: "An account with this email already exists." },
-        { status: 409 },
+        { error: "fullName, email, and password are required." },
+        { status: 400 },
       );
     }
 
-    // Return a clear setup hint when the users table is missing.
-    if (pgError.code === "42P01") {
+    if (!isStrongPassword(password)) {
+      // Enforce strong password policy on the server, not just the UI.
       return NextResponse.json(
         {
           error:
-            "Users table not found. Run app/app/data/users.sql in your database.",
+            "Password must be at least 8 characters and include an uppercase letter, a number, and a special character.",
         },
-        { status: 500 },
+        { status: 400 },
       );
     }
 
-    console.error("Failed to sign up user", pgError);
-    return NextResponse.json(
-      { error: "Could not create account." },
-      { status: 500 },
+    const { firstName, lastName } = splitFullName(fullName);
+    // Store only the bcrypt hash, never the raw password.
+    const passwordHash = await hashPassword(password);
+
+    const result = await getPool().query<UserRow>(
+      `INSERT INTO users (first_name, last_name, email, password_hash, role)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, first_name, last_name, email, role`,
+      [firstName, lastName, email, passwordHash, role],
     );
+
+    return NextResponse.json({ user: result.rows[0] }, { status: 201 });
+  } catch (error: unknown) {
+    const pgError = error as { code?: string; message?: string };
+
+    if (pgError.code === "23505") {
+      // PostgreSQL unique_violation for duplicate email.
+      return NextResponse.json(
+        { error: "Email already exists." },
+        { status: 409 },
+      );
+    }
+
+    console.error("Failed to sign up", pgError);
+    return NextResponse.json({ error: "Failed to sign up." }, { status: 500 });
   }
 }
