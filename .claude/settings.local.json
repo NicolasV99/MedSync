@@ -9,7 +9,8 @@
       "Bash(python -c ' *)",
       "Bash(npm --version)",
       "Bash(node -e \"console.log\\(require\\('./node_modules/next/package.json'\\).version\\)\")",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(Test-Path \"C:\\\\Users\\\\legol\\\\OneDrive\\\\Escritorio\\\\BYU\\\\CSE 499 - Senior Project\\\\MedSync\\\\app\\\\node_modules\\\\bcryptjs\")"
     ]
   }
 }
