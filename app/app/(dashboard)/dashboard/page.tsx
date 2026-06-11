@@ -1,6 +1,7 @@
 import { getPool } from "@/lib/db";
 import { StatsGrid } from "@/components/dashboard/StatsGrid";
 import { RecentAppointments } from "@/components/dashboard/RecentAppointments";
+import { GoogleCalendarCard } from "@/components/dashboard/GoogleCalendarCard";
 
 type TotalPatientsRow = {
   total: string;
@@ -29,7 +30,10 @@ export default async function DashboardPage() {
 
       <StatsGrid totalPatients={totalPatients} />
 
-      <RecentAppointments />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentAppointments />
+        <GoogleCalendarCard />
+      </div>
     </div>
   );
 }
