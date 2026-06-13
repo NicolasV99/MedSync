@@ -93,6 +93,9 @@ type SidebarProps = {
 export default function Sidebar({ userName, userEmail }: SidebarProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const displayName = userName?.trim() || "User";
   const displayEmail = userEmail?.trim() || "No email";
@@ -112,6 +115,31 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
 
   async function handleLogout() {
     await signOut({ callbackUrl: "/login" });
+  }
+
+  async function handleDeleteAccount() {
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const response = await fetch("/api/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json()) as { error?: string };
+        throw new Error(payload.error ?? "Failed to delete account.");
+      }
+
+      // End the local session immediately after successful account deletion.
+      await signOut({ callbackUrl: "/login?accountDeleted=1" });
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error ? error.message : "Failed to delete account.",
+      );
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -170,19 +198,23 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
       <div className="px-3 py-4 border-t border-neutral-border relative">
         {menuOpen ? (
           <div className="absolute left-3 right-3 bottom-full mb-2 bg-white border border-neutral-border rounded-lg shadow-md p-1 z-20">
+            <Link
+              href="/account"
+              onClick={() => setMenuOpen(false)}
+              className="block w-full px-3 py-2 text-sm text-neutral-gray rounded-md hover:bg-neutral-light transition-colors"
+            >
+              Configuration
+            </Link>
             <button
               type="button"
-              disabled
-              className="w-full text-left px-3 py-2 text-sm text-neutral-gray rounded-md cursor-not-allowed opacity-60"
+              onClick={() => {
+                setDeleteModalOpen(true);
+                setMenuOpen(false);
+                setDeleteError(null);
+              }}
+              className="w-full text-left px-3 py-2 text-sm text-red-600 rounded-md hover:bg-red-50 transition-colors"
             >
-              Configuration (Soon)
-            </button>
-            <button
-              type="button"
-              disabled
-              className="w-full text-left px-3 py-2 text-sm text-neutral-gray rounded-md cursor-not-allowed opacity-60"
-            >
-              Delete account (Soon)
+              Delete account
             </button>
             <button
               type="button"
@@ -217,6 +249,67 @@ export default function Sidebar({ userName, userEmail }: SidebarProps) {
           </div>
         </div>
       </div>
+
+      {deleteModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-xl border border-neutral-border bg-white p-5 shadow-lg">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold text-neutral-dark">
+                Delete account permanently
+              </h2>
+              <p className="mt-1 text-sm text-neutral-gray">
+                This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <p className="font-medium">Before continuing, please note:</p>
+              {/* Human-readable risk checklist shown before any destructive action. */}
+              <ul className="mt-2 space-y-1 list-disc list-inside">
+                <li>Your account access will be removed permanently.</li>
+                <li>
+                  Your appointments and calendar sync tokens will be deleted.
+                </li>
+                <li>
+                  Patient and clinical data linked to this account may be lost.
+                </li>
+              </ul>
+            </div>
+
+            {deleteError ? (
+              <p className="mt-3 rounded-lg border border-red-200 bg-bg-danger px-3 py-2 text-sm text-danger">
+                {deleteError}
+              </p>
+            ) : null}
+
+            <p className="mt-5 text-sm font-medium text-neutral-dark">
+              Do you still want to proceed?
+            </p>
+
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setDeleteError(null);
+                }}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-neutral-gray hover:text-neutral-dark"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleDeleteAccount}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isDeleting ? "Deleting..." : "Delete permanently"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </aside>
   );
 }

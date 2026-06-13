@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -20,7 +21,7 @@ export type Appointment = {
   patient_id?: number;
   patient_name: string;
   start: string; // ISO datetime
-  end: string;   // ISO datetime
+  end: string; // ISO datetime
   status: AppointmentStatus;
   google_event_id?: string;
 };
@@ -29,76 +30,155 @@ type AppointmentsContextType = {
   appointments: Appointment[];
   isLoading: boolean;
   addAppointment: (data: Omit<Appointment, "id">) => Promise<void>;
-  updateAppointment: (id: string, updates: Partial<Appointment>) => void;
-  removeAppointment: (id: string) => void;
+  updateAppointment: (
+    id: string,
+    updates: Partial<Appointment>,
+  ) => Promise<void>;
+  removeAppointment: (id: string) => Promise<void>;
 };
 
 const AppointmentsContext = createContext<AppointmentsContextType | null>(null);
 
-// Mock appointments for development — replace with API call when Nefi's endpoint is ready
-const MOCK_APPOINTMENTS: Appointment[] = [
-  {
-    id: "1",
-    title: "General Consultation",
-    patient_name: "Maria Gutierrez",
-    patient_id: 1,
-    start: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString(),
-    end: new Date(Date.now() + 1000 * 60 * 60 * 3).toISOString(),
-    status: "confirmed",
-  },
-  {
-    id: "2",
-    title: "Follow-up",
-    patient_name: "Doug McManamon",
-    patient_id: 2,
-    start: new Date(Date.now() + 1000 * 60 * 60 * 26).toISOString(),
-    end: new Date(Date.now() + 1000 * 60 * 60 * 27).toISOString(),
-    status: "scheduled",
-  },
-  {
-    id: "3",
-    title: "Check-up",
-    patient_name: "Norman Allen",
-    patient_id: 3,
-    start: new Date(Date.now() + 1000 * 60 * 60 * 50).toISOString(),
-    end: new Date(Date.now() + 1000 * 60 * 60 * 51).toISOString(),
-    status: "scheduled",
-  },
-];
+type AppointmentsApiResponse = {
+  appointments?: Appointment[];
+  appointment?: Appointment;
+  error?: string;
+};
+
+async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers || {}),
+    },
+  });
+
+  const data = (await response.json().catch(() => ({}))) as T & {
+    error?: string;
+  };
+
+  if (!response.ok) {
+    throw new Error(data.error || "Request failed.");
+  }
+
+  return data;
+}
 
 export function AppointmentsProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [appointments, setAppointments] =
-    useState<Appointment[]>(MOCK_APPOINTMENTS);
-  const [isLoading] = useState(false);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const addAppointment = useCallback(
-    async (data: Omit<Appointment, "id">) => {
-      // TODO: replace with POST /api/appointments when Nefi's endpoint is ready
-      const newAppointment: Appointment = {
-        ...data,
-        id: crypto.randomUUID(),
-      };
-      setAppointments((prev) => [...prev, newAppointment]);
-    },
-    [],
-  );
+  const loadAppointments = useCallback(async (showLoading = true) => {
+    if (showLoading) {
+      setIsLoading(true);
+    }
+    try {
+      const data = await requestJson<AppointmentsApiResponse>(
+        "/api/appointments",
+        {
+          method: "GET",
+        },
+      );
+      setAppointments(data.appointments ?? []);
+    } catch {
+      setAppointments([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadAppointments(false);
+  }, [loadAppointments]);
+
+  const addAppointment = useCallback(async (data: Omit<Appointment, "id">) => {
+    const response = await requestJson<AppointmentsApiResponse>(
+      "/api/appointments",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          patient_id: data.patient_id ?? null,
+          title: data.title,
+          start: data.start,
+          end: data.end,
+          status: data.status,
+          syncGoogle: true,
+        }),
+      },
+    );
+
+    if (!response.appointment) {
+      throw new Error("Appointment was not created.");
+    }
+
+    setAppointments((prev) => [response.appointment as Appointment, ...prev]);
+  }, []);
 
   const updateAppointment = useCallback(
-    (id: string, updates: Partial<Appointment>) => {
+    async (id: string, updates: Partial<Appointment>) => {
+      const previous = appointments;
       setAppointments((prev) =>
         prev.map((a) => (a.id === id ? { ...a, ...updates } : a)),
       );
+
+      try {
+        const response = await requestJson<AppointmentsApiResponse>(
+          `/api/appointments/${id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({
+              patient_id: updates.patient_id,
+              title: updates.title,
+              start: updates.start,
+              end: updates.end,
+              status: updates.status,
+              syncGoogle: true,
+            }),
+          },
+        );
+
+        if (response.appointment) {
+          setAppointments((prev) =>
+            prev.map((a) =>
+              a.id === id
+                ? {
+                    ...a,
+                    ...(response.appointment as Appointment),
+                  }
+                : a,
+            ),
+          );
+        }
+      } catch (error) {
+        setAppointments(previous);
+        throw error;
+      }
     },
-    [],
+    [appointments],
   );
 
-  const removeAppointment = useCallback((id: string) => {
-    setAppointments((prev) => prev.filter((a) => a.id !== id));
-  }, []);
+  const removeAppointment = useCallback(
+    async (id: string) => {
+      const previous = appointments;
+      setAppointments((prev) => prev.filter((a) => a.id !== id));
+
+      try {
+        await requestJson<{ message: string }>(`/api/appointments/${id}`, {
+          method: "DELETE",
+        });
+      } catch (error) {
+        setAppointments(previous);
+        throw error;
+      }
+    },
+    [appointments],
+  );
 
   const value = useMemo(
     () => ({
@@ -108,7 +188,13 @@ export function AppointmentsProvider({
       updateAppointment,
       removeAppointment,
     }),
-    [appointments, isLoading, addAppointment, updateAppointment, removeAppointment],
+    [
+      appointments,
+      isLoading,
+      addAppointment,
+      updateAppointment,
+      removeAppointment,
+    ],
   );
 
   return (

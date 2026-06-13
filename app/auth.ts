@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 
 import { hashPassword, verifyPassword } from "@/lib/auth";
+import { saveGoogleCalendarTokens } from "@/lib/google-calendar";
 import { getPool } from "@/lib/db";
 
 const authSecret =
@@ -21,6 +22,13 @@ if (!authSecret && process.env.NODE_ENV === "production") {
 const googleClientId = process.env.GOOGLE_CLIENT_ID || process.env.client_id;
 const googleClientSecret =
   process.env.GOOGLE_CLIENT_SECRET || process.env.client_secret;
+const baseGoogleScope = "openid email profile";
+const calendarGoogleScope = "https://www.googleapis.com/auth/calendar.events";
+const includeCalendarScopeOnLogin =
+  process.env.GOOGLE_INCLUDE_CALENDAR_SCOPE_ON_LOGIN === "true";
+const googleAuthScope = includeCalendarScopeOnLogin
+  ? `${baseGoogleScope} ${calendarGoogleScope}`
+  : baseGoogleScope;
 
 type UserAuthRow = {
   id: number;
@@ -31,6 +39,19 @@ type UserAuthRow = {
   password_hash: string;
 };
 
+async function getUserById(userId: number) {
+  const result = await getPool().query<UserAuthRow>(
+    `SELECT id, first_name, last_name, email, role, password_hash
+     FROM users
+     WHERE id = $1
+     LIMIT 1`,
+    [userId],
+  );
+
+  return result.rows[0] ?? null;
+}
+
+// Split a full name into the first and last name fields required by the current DB schema.
 function splitFullName(fullName: string) {
   const trimmed = fullName.trim();
   const [firstName, ...rest] = trimmed.split(/\s+/);
@@ -42,6 +63,7 @@ function splitFullName(fullName: string) {
   };
 }
 
+// Load a user by email so we can authenticate credentials logins and link Google accounts.
 async function getUserByEmail(email: string) {
   const result = await getPool().query<UserAuthRow>(
     `SELECT id, first_name, last_name, email, role, password_hash
@@ -54,6 +76,7 @@ async function getUserByEmail(email: string) {
   return result.rows[0] ?? null;
 }
 
+// Create a local user record when someone signs in with Google for the first time.
 async function ensureGoogleUser(email: string, name?: string | null) {
   const existing = await getUserByEmail(email);
 
@@ -99,12 +122,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   providers: [
+    // Google provider is configured for calendar permissions and offline access.
     Google({
       clientId: googleClientId,
       clientSecret: googleClientSecret,
       authorization: {
         params: {
-          prompt: "select_account",
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+          scope: googleAuthScope,
         },
       },
     }),
@@ -146,35 +173,65 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    // After Google login, ensure the local user exists and persist the OAuth tokens.
     async signIn({ user, account }) {
       if (account?.provider === "google" && user.email) {
-        await ensureGoogleUser(user.email, user.name);
+        const dbUser = await ensureGoogleUser(user.email, user.name);
+
+        if (account.access_token) {
+          await saveGoogleCalendarTokens({
+            userId: dbUser.id,
+            googleEmail: user.email,
+            accessToken: account.access_token,
+            refreshToken: account.refresh_token,
+            tokenType: account.token_type,
+            scope: account.scope,
+            expiresAt: account.expires_at,
+          });
+        }
       }
 
       return true;
     },
+    // Copy the DB-backed role and user ID into the JWT so the session can read them later.
     async jwt({ token, user }) {
-      if (token.email) {
-        const dbUser = await getUserByEmail(token.email);
+      let dbUser = null;
 
-        if (dbUser) {
-          token.role = dbUser.role;
-          token.userId = String(dbUser.id);
-          token.name = `${dbUser.first_name} ${dbUser.last_name}`.trim();
+      if (token.userId) {
+        const parsedUserId = Number(token.userId);
+
+        if (!Number.isNaN(parsedUserId)) {
+          dbUser = await getUserById(parsedUserId);
         }
+      }
+
+      if (!dbUser && token.email) {
+        dbUser = await getUserByEmail(token.email);
+      }
+
+      if (dbUser) {
+        token.role = dbUser.role;
+        token.userId = String(dbUser.id);
+        token.email = dbUser.email;
+        token.name = `${dbUser.first_name} ${dbUser.last_name}`.trim();
       }
 
       if (user) {
         token.role = user.role ?? token.role;
         token.userId = user.id ?? token.userId;
+        token.email = user.email ?? token.email;
+        token.name = user.name ?? token.name;
       }
 
       return token;
     },
+    // Expose the internal user id and role on the client session object.
     async session({ session, token }) {
       if (session.user) {
         session.user.id = String(token.userId || "");
         session.user.role = String(token.role || "staff");
+        session.user.name = token.name ?? session.user.name;
+        session.user.email = token.email ?? session.user.email;
       }
 
       return session;
