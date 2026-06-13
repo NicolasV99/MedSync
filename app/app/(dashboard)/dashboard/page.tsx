@@ -1,51 +1,56 @@
 import { getPool } from "@/lib/db";
 
-const stats = [
-  {
-    label: "Appointments Today",
-    value: "—",
-    icon: "📅",
-    color: "bg-bg-info text-info",
-  },
-  {
-    label: "Reminders Sent",
-    value: "—",
-    icon: "💬",
-    color: "bg-bg-success text-success",
-  },
-  {
-    label: "No-Show Rate",
-    value: "—",
-    icon: "📊",
-    color: "bg-bg-warning text-warning",
-  },
-];
+export const dynamic = "force-dynamic";
 
-type TotalPatientsRow = {
-  total: string;
+type PatientCountRow = {
+  total_patients: string;
 };
 
-export default async function DashboardPage() {
-  let totalPatients = "0";
-
+// Gets the current number of patient records from the database for the dashboard.
+async function getTotalPatients() {
   try {
-    const result = await getPool().query<TotalPatientsRow>(
-      `SELECT COUNT(*)::text AS total FROM patients`,
+    const result = await getPool().query<PatientCountRow>(
+      `SELECT COUNT(*)::text AS total_patients
+       FROM patients`,
     );
-    totalPatients = result.rows[0]?.total ?? "0";
-  } catch (error) {
-    console.error("Failed to fetch total patients", error);
-  }
 
-  const dashboardStats = [
+    return result.rows[0]?.total_patients ?? "0";
+  } catch (error) {
+    console.error("Failed to load total patients", error);
+    return "—";
+  }
+}
+
+export default async function DashboardPage() {
+  const totalPatients = await getTotalPatients();
+
+  const stats = [
     {
       label: "Total Patients",
       value: totalPatients,
       icon: "👥",
       color: "bg-primary-light text-primary",
     },
-    ...stats,
+    {
+      label: "Appointments Today",
+      value: "—",
+      icon: "📅",
+      color: "bg-bg-info text-info",
+    },
+    {
+      label: "Reminders Sent",
+      value: "—",
+      icon: "💬",
+      color: "bg-bg-success text-success",
+    },
+    {
+      label: "No-Show Rate",
+      value: "—",
+      icon: "📊",
+      color: "bg-bg-warning text-warning",
+    },
   ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -57,7 +62,7 @@ export default async function DashboardPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {dashboardStats.map((stat) => (
+        {stats.map((stat) => (
           <div
             key={stat.label}
             className="bg-white rounded-xl border border-neutral-border p-5 shadow-sm"

@@ -4,22 +4,36 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Patient } from "./PatientTable";
 
-function toInputDate(value: unknown): string {
-  if (!value) return "";
+async function getErrorMessage(response: Response, fallback: string) {
+  const contentType = response.headers.get("content-type") ?? "";
 
-  if (typeof value === "string") {
-    // Handles ISO strings and plain YYYY-MM-DD values.
-    return value.includes("T") ? value.split("T")[0] : value;
+  if (contentType.includes("application/json")) {
+    const payload = (await response.json()) as { error?: string };
+    return payload.error ?? fallback;
   }
 
-  if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return value.toISOString().split("T")[0];
+  const text = await response.text();
+  return text ? `${fallback} (${response.status})` : fallback;
+}
+
+function normalizeDobForInput(dob: string | Date | null | undefined) {
+  if (!dob) return "";
+
+  if (typeof dob === "string") {
+    if (!dob.trim()) return "";
+    return dob.includes("T") ? dob.split("T")[0] : dob;
+  }
+
+  if (dob instanceof Date && !Number.isNaN(dob.getTime())) {
+    const year = dob.getUTCFullYear();
+    const month = String(dob.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(dob.getUTCDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   }
 
   return "";
 }
 
-// Edits an existing patient in a modal and updates it via the PUT endpoint.
 export function EditPatientModal({
   patient,
   onClose,
@@ -32,7 +46,7 @@ export function EditPatientModal({
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     patient_name: patient.patient_name,
-    dob: toInputDate(patient.dob),
+    dob: normalizeDobForInput(patient.dob),
     email: patient.email ?? "",
     phone: patient.phone ?? "",
   });
@@ -54,8 +68,9 @@ export function EditPatientModal({
       });
 
       if (!res.ok) {
-        const payload = (await res.json()) as { error?: string };
-        throw new Error(payload.error ?? "Failed to update patient.");
+        throw new Error(
+          await getErrorMessage(res, "Failed to update patient."),
+        );
       }
 
       router.refresh();
