@@ -39,6 +39,18 @@ type UserAuthRow = {
   password_hash: string;
 };
 
+async function getUserById(userId: number) {
+  const result = await getPool().query<UserAuthRow>(
+    `SELECT id, first_name, last_name, email, role, password_hash
+     FROM users
+     WHERE id = $1
+     LIMIT 1`,
+    [userId],
+  );
+
+  return result.rows[0] ?? null;
+}
+
 // Split a full name into the first and last name fields required by the current DB schema.
 function splitFullName(fullName: string) {
   const trimmed = fullName.trim();
@@ -183,19 +195,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     // Copy the DB-backed role and user ID into the JWT so the session can read them later.
     async jwt({ token, user }) {
-      if (token.email) {
-        const dbUser = await getUserByEmail(token.email);
+      let dbUser = null;
 
-        if (dbUser) {
-          token.role = dbUser.role;
-          token.userId = String(dbUser.id);
-          token.name = `${dbUser.first_name} ${dbUser.last_name}`.trim();
+      if (token.userId) {
+        const parsedUserId = Number(token.userId);
+
+        if (!Number.isNaN(parsedUserId)) {
+          dbUser = await getUserById(parsedUserId);
         }
+      }
+
+      if (!dbUser && token.email) {
+        dbUser = await getUserByEmail(token.email);
+      }
+
+      if (dbUser) {
+        token.role = dbUser.role;
+        token.userId = String(dbUser.id);
+        token.email = dbUser.email;
+        token.name = `${dbUser.first_name} ${dbUser.last_name}`.trim();
       }
 
       if (user) {
         token.role = user.role ?? token.role;
         token.userId = user.id ?? token.userId;
+        token.email = user.email ?? token.email;
+        token.name = user.name ?? token.name;
       }
 
       return token;
@@ -205,6 +230,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = String(token.userId || "");
         session.user.role = String(token.role || "staff");
+        session.user.name = token.name ?? session.user.name;
+        session.user.email = token.email ?? session.user.email;
       }
 
       return session;

@@ -39,21 +39,28 @@ export async function POST(request: Request) {
 
     const user = result.rows[0];
 
-    // Always return a generic success message to avoid account enumeration.
-    if (user) {
-      const token = createResetToken(user.email);
-      const baseUrl =
-        process.env.NEXTAUTH_URL ||
-        process.env.APP_URL ||
-        "http://localhost:3000";
-      const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`;
-
-      await sendResetEmail(user.email, resetUrl);
+    if (!user) {
+      return NextResponse.json(
+        {
+          error:
+            "The reset password link couldn't be sent because the email used does not exist.",
+          emailDeliveryConfigured: hasSmtpConfig(),
+        },
+        { status: 404 },
+      );
     }
 
+    const token = createResetToken(user.email);
+    const baseUrl =
+      process.env.NEXTAUTH_URL ||
+      process.env.APP_URL ||
+      "http://localhost:3000";
+    const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`;
+
+    await sendResetEmail(user.email, resetUrl);
+
     return NextResponse.json({
-      message:
-        "If the email exists in our system, password reset instructions will be sent shortly.",
+      message: "reset password link sent succesfully",
       emailDeliveryConfigured: hasSmtpConfig(),
     });
   } catch (error) {
