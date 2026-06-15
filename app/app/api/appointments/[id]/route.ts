@@ -63,8 +63,8 @@ async function getAppointment(userId: number, appointmentId: number) {
        a.notes,
        a.google_event_id,
        a.created_at
-     FROM appointments a
-     LEFT JOIN patients p ON p.patient_id = a.patient_id
+    FROM appointments a
+    LEFT JOIN patients p ON p.patient_id = a.patient_id AND p.user_id = a.user_id
      WHERE a.id = $1 AND a.user_id = $2
      LIMIT 1`,
     [appointmentId, userId],
@@ -132,6 +132,16 @@ export async function PUT(request: Request, context: RouteContext) {
       );
     }
 
+    if (
+      patientId !== null &&
+      (!Number.isInteger(patientId) || patientId <= 0)
+    ) {
+      return NextResponse.json(
+        { error: "patient_id is invalid." },
+        { status: 400 },
+      );
+    }
+
     const result = await getPool().query<AppointmentRow>(
       `UPDATE appointments
        SET patient_id = $1,
@@ -141,6 +151,15 @@ export async function PUT(request: Request, context: RouteContext) {
            status = $5,
            notes = $6
        WHERE id = $7 AND user_id = $8
+         AND (
+           $1::INTEGER IS NULL
+           OR EXISTS (
+             SELECT 1
+             FROM patients p
+             WHERE p.patient_id = $1
+               AND p.user_id = $8
+           )
+         )
        RETURNING
          id,
          patient_id,
@@ -148,6 +167,7 @@ export async function PUT(request: Request, context: RouteContext) {
            SELECT p.patient_name
            FROM patients p
            WHERE p.patient_id = appointments.patient_id
+             AND p.user_id = appointments.user_id
          ) AS patient_name,
          user_id,
          title,
@@ -168,6 +188,13 @@ export async function PUT(request: Request, context: RouteContext) {
         userId,
       ],
     );
+
+    if (!result.rows[0]) {
+      return NextResponse.json(
+        { error: "Selected patient does not belong to your account." },
+        { status: 400 },
+      );
+    }
 
     const updated = result.rows[0];
     let calendarSyncWarning: string | null = null;

@@ -54,7 +54,7 @@ export async function POST(request: Request) {
          a.notes,
          a.google_event_id
        FROM appointments a
-       LEFT JOIN patients p ON p.patient_id = a.patient_id
+       LEFT JOIN patients p ON p.patient_id = a.patient_id AND p.user_id = a.user_id
        WHERE a.user_id = $1
          AND ($2::INTEGER IS NULL OR a.id = $2)
        ORDER BY a.datetime DESC`,

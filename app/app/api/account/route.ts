@@ -212,6 +212,9 @@ export async function DELETE() {
     await getPool().query(`DELETE FROM appointments WHERE user_id = $1`, [
       currentUser.id,
     ]);
+    await getPool().query(`DELETE FROM patients WHERE user_id = $1`, [
+      currentUser.id,
+    ]);
     await getPool().query(
       `DELETE FROM google_calendar_tokens WHERE user_id = $1`,
       [currentUser.id],

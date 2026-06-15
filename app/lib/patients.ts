@@ -1,4 +1,5 @@
 import { getPool } from "@/lib/db";
+import { auth } from "@/auth";
 
 export type Patient = {
   patient_id: number;
@@ -49,10 +50,19 @@ export async function getPatients() {
   let usingMockData = false;
 
   try {
+    const session = await auth();
+    const userId = Number(session?.user?.id || 0);
+
+    if (!userId) {
+      return { patients: [], usingMockData: false };
+    }
+
     const result = await getPool().query<Patient>(
       `SELECT patient_id, patient_name, email, phone, dob, last_visit
        FROM patients
+       WHERE user_id = $1
        ORDER BY patient_id DESC`,
+      [userId],
     );
     patients = result.rows;
   } catch (error) {

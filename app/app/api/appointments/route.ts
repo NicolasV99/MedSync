@@ -70,7 +70,7 @@ export async function GET() {
          a.google_event_id,
          a.created_at
        FROM appointments a
-       LEFT JOIN patients p ON p.patient_id = a.patient_id
+       LEFT JOIN patients p ON p.patient_id = a.patient_id AND p.user_id = a.user_id
        WHERE a.user_id = $1
        ORDER BY a.datetime DESC`,
       [userId],
@@ -128,6 +128,16 @@ export async function POST(request: Request) {
       );
     }
 
+    if (
+      patientId !== null &&
+      (!Number.isInteger(patientId) || patientId <= 0)
+    ) {
+      return NextResponse.json(
+        { error: "patient_id is invalid." },
+        { status: 400 },
+      );
+    }
+
     const result = await getPool().query<AppointmentRow>(
       `INSERT INTO appointments (
          patient_id,
@@ -138,7 +148,19 @@ export async function POST(request: Request) {
          status,
          notes
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       SELECT
+         CASE WHEN $1::INTEGER IS NULL THEN NULL ELSE p.patient_id END,
+         $2,
+         $3,
+         $4,
+         $5,
+         $6,
+         $7
+       FROM (SELECT 1) seed
+       LEFT JOIN patients p
+         ON p.patient_id = $1
+        AND p.user_id = $2
+       WHERE $1::INTEGER IS NULL OR p.patient_id IS NOT NULL
        RETURNING
          id,
          patient_id,
@@ -146,6 +168,7 @@ export async function POST(request: Request) {
            SELECT p.patient_name
            FROM patients p
            WHERE p.patient_id = appointments.patient_id
+             AND p.user_id = appointments.user_id
          ) AS patient_name,
          user_id,
          title,
@@ -165,6 +188,13 @@ export async function POST(request: Request) {
         notes,
       ],
     );
+
+    if (!result.rows[0]) {
+      return NextResponse.json(
+        { error: "Selected patient does not belong to your account." },
+        { status: 400 },
+      );
+    }
 
     const appointment = result.rows[0];
     let calendarSyncWarning: string | null = null;

@@ -1,4 +1,6 @@
 import { getPool } from "@/lib/db";
+import { auth } from "@/auth";
+import { StatsGrid } from "@/components/dashboard/StatsGrid";
 
 export const dynamic = "force-dynamic";
 
@@ -9,9 +11,18 @@ type PatientCountRow = {
 // Gets the current number of patient records from the database for the dashboard.
 async function getTotalPatients() {
   try {
+    const session = await auth();
+    const userId = Number(session?.user?.id || 0);
+
+    if (!userId) {
+      return "0";
+    }
+
     const result = await getPool().query<PatientCountRow>(
       `SELECT COUNT(*)::text AS total_patients
-       FROM patients`,
+       FROM patients
+       WHERE user_id = $1`,
+      [userId],
     );
 
     return result.rows[0]?.total_patients ?? "0";
@@ -24,33 +35,6 @@ async function getTotalPatients() {
 export default async function DashboardPage() {
   const totalPatients = await getTotalPatients();
 
-  const stats = [
-    {
-      label: "Total Patients",
-      value: totalPatients,
-      icon: "👥",
-      color: "bg-primary-light text-primary",
-    },
-    {
-      label: "Appointments Today",
-      value: "—",
-      icon: "📅",
-      color: "bg-bg-info text-info",
-    },
-    {
-      label: "Reminders Sent",
-      value: "—",
-      icon: "💬",
-      color: "bg-bg-success text-success",
-    },
-    {
-      label: "No-Show Rate",
-      value: "—",
-      icon: "📊",
-      color: "bg-bg-warning text-warning",
-    },
-  ];
-
   return (
     <div className="space-y-6">
       <div>
@@ -61,22 +45,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="bg-white rounded-xl border border-neutral-border p-5 shadow-sm"
-          >
-            <div
-              className={`inline-flex items-center justify-center w-10 h-10 rounded-lg text-lg ${stat.color} mb-3`}
-            >
-              {stat.icon}
-            </div>
-            <p className="text-2xl font-bold text-neutral-dark">{stat.value}</p>
-            <p className="text-sm text-neutral-gray mt-0.5">{stat.label}</p>
-          </div>
-        ))}
-      </div>
+      <StatsGrid totalPatients={totalPatients} />
 
       {/* Recent Activity placeholder */}
       <div className="bg-white rounded-xl border border-neutral-border p-5 shadow-sm">
