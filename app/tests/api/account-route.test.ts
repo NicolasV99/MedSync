@@ -164,15 +164,20 @@ describe("account route", () => {
     );
     expect(mocks.queryMock).toHaveBeenNthCalledWith(
       4,
-      `DELETE FROM google_calendar_tokens WHERE user_id = $1`,
+      `DELETE FROM patients WHERE user_id = $1`,
       [7],
     );
     expect(mocks.queryMock).toHaveBeenNthCalledWith(
       5,
+      `DELETE FROM google_calendar_tokens WHERE user_id = $1`,
+      [7],
+    );
+    expect(mocks.queryMock).toHaveBeenNthCalledWith(
+      6,
       `DELETE FROM users WHERE id = $1`,
       [7],
     );
-    expect(mocks.queryMock).toHaveBeenNthCalledWith(6, "COMMIT");
+    expect(mocks.queryMock).toHaveBeenNthCalledWith(7, "COMMIT");
   });
 
   it("rejects deletion for unauthenticated users", async () => {

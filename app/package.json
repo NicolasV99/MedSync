@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "db:migrate:appointments": "node scripts/run-appointments-migration.mjs"
+    "db:migrate:appointments": "node scripts/run-appointments-migration.mjs",
+    "db:migrate:patients": "node scripts/run-patients-multi-tenant-migration.mjs"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.20",

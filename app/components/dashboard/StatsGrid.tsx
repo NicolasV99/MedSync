@@ -44,7 +44,10 @@ function getWeekBounds() {
 
 export function StatsGrid({ totalPatients }: Props) {
   const { appointments } = useAppointments();
-  const todayCount = appointments.filter((a) => isToday(a.start)).length;
+  const todayCount = appointments.filter(
+    (a) =>
+      isToday(a.start) && a.status !== "cancelled" && a.status !== "completed",
+  ).length;
 
   const { monday, sunday } = getWeekBounds();
   const patientsThisWeek = new Set(
@@ -53,7 +56,7 @@ export function StatsGrid({ totalPatients }: Props) {
         const d = new Date(a.start);
         return d >= monday && d <= sunday;
       })
-      .map((a) => a.patient_id ?? a.patient_name)
+      .map((a) => a.patient_id ?? a.patient_name),
   ).size;
 
   const stats: Stat[] = [

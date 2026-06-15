@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { auth } from "@/auth";
 import { getPool } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -34,11 +35,18 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   try {
+    const session = await auth();
+    const userId = Number(session?.user?.id || 0);
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     const result = await getPool().query<PatientRow>(
       `SELECT patient_id, patient_name, email, phone, dob, last_visit
        FROM patients
-       WHERE patient_id = $1`,
-      [patientId],
+       WHERE patient_id = $1 AND user_id = $2`,
+      [patientId, userId],
     );
 
     if (!result.rows[0]) {
@@ -67,6 +75,13 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   try {
+    const session = await auth();
+    const userId = Number(session?.user?.id || 0);
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     const body = (await request.json()) as {
       patient_name?: string;
       email?: string;
@@ -92,9 +107,9 @@ export async function PUT(request: Request, context: RouteContext) {
            dob = $2,
            email = $3,
            phone = $4
-       WHERE patient_id = $5
+       WHERE patient_id = $5 AND user_id = $6
        RETURNING patient_id, patient_name, email, phone, dob, last_visit`,
-      [patientName, dob, email, phone, patientId],
+      [patientName, dob, email, phone, patientId, userId],
     );
 
     if (!result.rows[0]) {
@@ -140,11 +155,18 @@ export async function DELETE(_request: Request, context: RouteContext) {
   }
 
   try {
+    const session = await auth();
+    const userId = Number(session?.user?.id || 0);
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     const result = await getPool().query<Pick<PatientRow, "patient_id">>(
       `DELETE FROM patients
-       WHERE patient_id = $1
+       WHERE patient_id = $1 AND user_id = $2
        RETURNING patient_id`,
-      [patientId],
+      [patientId, userId],
     );
 
     if (!result.rows[0]) {

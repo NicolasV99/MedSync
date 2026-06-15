@@ -123,6 +123,29 @@ describe("appointments routes", () => {
     expect(body.appointment.google_event_id).toBe("g-event-1");
   });
 
+  it("rejects creating appointment with patient from another user", async () => {
+    mocks.queryMock.mockResolvedValueOnce({ rows: [] });
+
+    const request = new Request("http://localhost/api/appointments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        patient_id: 999,
+        title: "Follow-up",
+        start: "2026-06-11T10:00:00.000Z",
+        end: "2026-06-11T10:30:00.000Z",
+        status: "scheduled",
+      }),
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Selected patient does not belong to your account.",
+    });
+  });
+
   it("updates and deletes an appointment by id", async () => {
     mocks.queryMock
       .mockResolvedValueOnce({
