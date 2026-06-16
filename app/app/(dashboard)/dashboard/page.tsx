@@ -1,6 +1,8 @@
 import { getPool } from "@/lib/db";
 import { auth } from "@/auth";
 import { StatsGrid } from "@/components/dashboard/StatsGrid";
+import { RecentAppointments } from "@/components/dashboard/RecentAppointments";
+import { GoogleCalendarCard } from "@/components/dashboard/GoogleCalendarCard";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +10,6 @@ type PatientCountRow = {
   total_patients: string;
 };
 
-// Gets the current number of patient records from the database for the dashboard.
 async function getTotalPatients() {
   try {
     const session = await auth();
@@ -44,37 +45,11 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats */}
       <StatsGrid totalPatients={totalPatients} />
 
-      {/* Recent Activity placeholder */}
-      <div className="bg-white rounded-xl border border-neutral-border p-5 shadow-sm">
-        <h2 className="text-base font-semibold text-neutral-dark mb-4">
-          Recent Appointments
-        </h2>
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-12 h-12 bg-neutral-light rounded-full flex items-center justify-center mb-3">
-            <svg
-              className="w-6 h-6 text-neutral-gray"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-          <p className="text-sm font-medium text-neutral-dark">
-            No appointments yet
-          </p>
-          <p className="text-xs text-neutral-gray mt-1">
-            Appointments will appear here once you connect Google Calendar.
-          </p>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentAppointments />
+        <GoogleCalendarCard />
       </div>
     </div>
   );
