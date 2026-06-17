@@ -4,14 +4,32 @@ A centralized appointment management platform for independent healthcare profess
 
 > CSE 499 Senior Project — BYU, Spring 2025
 
+**Live Demo:** https://med-sync-chi.vercel.app
+
+---
+
+## Completed Requirements
+
+| Requirement | Type | Status |
+|-------------|------|--------|
+| **User Authentication** — Secure email/password login and account middleware protection | Core | ✅ Complete — Nefi |
+| **Patient Management UI** — Interactive data tables with client-side search, sort, and filters | Core | ✅ Complete — Nicolas |
+| **Patient Profile Forms** — Dynamic dialogs to create, view, and edit clinical patient files | Core | ✅ Complete — Ange Junior |
+| **Interactive Agenda** — Full calendar interface in the appointments section | Core | ✅ Complete — Austin |
+| **Analytics Dashboard Layout** — Metrics panels, KPI cards, and appointment summaries | Core | ✅ Complete — Nicolas |
+| **Appointment Database & API** — RESTful CRUD endpoints with live PostgreSQL persistence | Core | ✅ Complete — Nefi |
+| **Google Authentication** — "Sign in with Google" OAuth 2.0 workflow | Core | ✅ Complete — Nicolas |
+
 ---
 
 ## Features
 
-- **Patient Management** — Create, view, edit, and delete patient records with basic clinical history
-- **Google Calendar Sync** — Two-way OAuth 2.0 integration; appointments stay in sync across devices
-- **WhatsApp Automation** — Automatic reminders sent 24 hours before each appointment via Twilio
-- **Metrics Dashboard** — Visual stats on attendance, no-show rate, and reminder delivery
+- **Patient Management** — Create, view, edit, and delete patient records with clinical history; scoped per authenticated user
+- **Appointments & Calendar** — Full FullCalendar interface with create/edit/delete; appointments persisted in PostgreSQL
+- **Google OAuth** — Sign in with Google or email/password via NextAuth v5
+- **Analytics Dashboard** — Live KPI cards (total patients, appointments today, patients this week, recent appointments)
+- **Google Calendar Sync** — Backend integration in progress; UI placeholder connected
+- **WhatsApp Reminders** — Automated patient notifications via WhatsApp (in progress)
 
 ---
 
@@ -20,10 +38,11 @@ A centralized appointment management platform for independent healthcare profess
 | Layer | Technology |
 |-------|-----------|
 | Frontend | Next.js 16, React 19, Tailwind CSS v4, TypeScript |
-| Backend | Node.js with Express |
-| Database | PostgreSQL / Firebase |
-| External APIs | Google Calendar API (OAuth 2.0), Twilio WhatsApp |
-| Deployment | Vercel (frontend), Railway / Render (backend) |
+| Auth | NextAuth v5 (Auth.js) — Credentials + Google OAuth 2.0 |
+| Database | PostgreSQL via Neon (serverless) |
+| Calendar UI | FullCalendar (daygrid, timegrid, interaction) |
+| External APIs | Google Calendar API, WhatsApp Business API |
+| Deployment | Vercel (full-stack via Next.js API routes) |
 
 ---
 
@@ -31,21 +50,29 @@ A centralized appointment management platform for independent healthcare profess
 
 ```
 MedSync/
-├── app/                        # Next.js frontend
+├── app/                            # Next.js full-stack app (frontend + API)
 │   ├── app/
-│   │   ├── (auth)/login/       # Login page
-│   │   └── (dashboard)/        # App pages (sidebar layout)
-│   │       ├── dashboard/      # Overview & metrics
-│   │       └── patients/       # Patient list & management
+│   │   ├── (auth)/                 # Login, signup, forgot/reset password
+│   │   ├── (dashboard)/            # Protected app pages
+│   │   │   ├── dashboard/          # Overview, KPI cards, recent appointments
+│   │   │   ├── patients/           # Patient list & management
+│   │   │   └── appointments/       # FullCalendar agenda view
+│   │   └── api/
+│   │       ├── auth/               # NextAuth + login/signup/reset endpoints
+│   │       ├── patients/           # CRUD patient records
+│   │       ├── appointments/       # CRUD appointments
+│   │       └── calendar/           # Google Calendar sync endpoints
 │   ├── components/
-│   │   └── layout/             # Sidebar, Navbar
-│   ├── types/                  # TypeScript interfaces
-│   └── lib/                    # Utility functions
-├── design/                     # Design deliverables
-│   ├── wireframes/
-│   ├── design-system/          # Design tokens, color palette, typography
-│   ├── specifications/
-│   └── handoff/
+│   │   ├── dashboard/              # KPI cards, recent appointments, calendar card
+│   │   ├── patients/               # Patient table, edit modal, delete button
+│   │   ├── appointments/           # Calendar, new/edit appointment modals
+│   │   └── layout/                 # Sidebar, Navbar
+│   ├── context/
+│   │   └── AppointmentsContext.tsx # Global appointments state (API-connected)
+│   ├── lib/                        # DB pool, Google Calendar client, patients helper
+│   ├── types/                      # TypeScript interfaces (next-auth.d.ts, etc.)
+│   └── auth.ts                     # NextAuth configuration
+├── qa/                             # QA test suite and API contract docs
 └── README.md
 ```
 
@@ -68,10 +95,7 @@ cd MedSync/app
 # Install dependencies
 npm install
 
-# Set up environment variables
-cp .env.local .env.local
-# Fill in the required values (see Environment Variables section)
-
+# Set up environment variables (see below)
 # Start the development server
 npm run dev
 ```
@@ -83,20 +107,34 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 Create a `.env.local` file inside `app/` with the following:
 
 ```env
-# Database
+# Database (Neon PostgreSQL)
 DATABASE_URL=
 
-# Google OAuth (for Calendar sync)
+# NextAuth
+AUTH_SECRET=
+AUTH_URL=http://localhost:3000
+
+# Google OAuth (login + calendar)
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
-NEXTAUTH_SECRET=
-NEXTAUTH_URL=http://localhost:3000
 
-# Twilio / WhatsApp
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
+# Email (password reset)
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASS=
 ```
+
+### Database Migrations
+
+After setting up your database, run the migrations:
+
+```bash
+# Create appointments table columns and Google Calendar tokens table
+node scripts/run-appointments-migration.mjs
+```
+
+The `tokens.sql` file in `app/data/` contains the `google_calendar_tokens` table schema — run it directly in your database console.
 
 ---
 
@@ -113,9 +151,9 @@ TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
 
 ## Deployment
 
-The frontend is deployed on Vercel. Every push to `main` triggers an automatic deploy.
+Deployed on Vercel. Every push to `main` triggers an automatic production deploy.
 
-Backend deployment target: Railway or Render (configured in Week 6).
+**Vercel settings:** Root Directory → `app/`
 
 ---
 
