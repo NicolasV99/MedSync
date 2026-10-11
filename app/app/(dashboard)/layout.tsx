@@ -10,7 +10,6 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Block dashboard access unless a valid session cookie is present.
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -19,11 +18,11 @@ export default async function DashboardLayout({
 
   return (
     <AppointmentsProvider>
-      <div className="flex h-full bg-neutral-light">
+      <div className="flex h-dvh bg-neutral-light">
         <Sidebar userName={session.user.name} userEmail={session.user.email} />
         <div className="flex flex-col flex-1 min-w-0">
           <Navbar />
-          <main className="flex-1 p-6 overflow-auto">{children}</main>
+          <main className="flex-1 px-4 py-6 lg:px-8 overflow-auto overscroll-contain">{children}</main>
         </div>
       </div>
     </AppointmentsProvider>
