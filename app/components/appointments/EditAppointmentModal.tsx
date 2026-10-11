@@ -97,36 +97,38 @@ export function EditAppointmentModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/35 p-4">
-      <div className="w-full max-w-md rounded-xl border border-neutral-border bg-white p-6 shadow-lg">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-3 mb-5">
           <div>
-            <h2 className="text-lg font-semibold text-neutral-dark">Edit Appointment</h2>
-            <p className="text-xs text-neutral-gray mt-0.5">Update the appointment details.</p>
+            <h2 className="text-headline text-neutral-dark">Edit Appointment</h2>
+            <p className="text-caption text-neutral-gray mt-0.5">Update the appointment details.</p>
           </div>
-          <button onClick={onClose} className="text-neutral-gray hover:text-neutral-dark">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button onClick={onClose}
+            className="pressable w-8 h-8 flex items-center justify-center rounded-full bg-neutral-light/80 text-neutral-gray">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {error && (
-          <p className="mb-4 text-sm px-3 py-2 rounded-lg bg-bg-danger text-danger border border-red-200">
+          <div className="mb-4 flex items-center gap-2 text-[13px] px-3.5 py-2.5 rounded-xl bg-danger/10 text-danger border border-danger/10">
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
             {error}
-          </p>
+          </div>
         )}
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          {/* Patient */}
           <div>
-            <label className="block text-sm font-medium text-neutral-dark mb-1.5">Patient</label>
-            <select
-              value={formData.patient_id}
+            <label htmlFor="edit_patient" className="block text-[13px] font-semibold text-neutral-dark mb-1.5">Patient</label>
+            <select id="edit_patient" value={formData.patient_id}
               onChange={(e) => update("patient_id", e.target.value)}
-              className="w-full px-3 py-2.5 text-sm border border-neutral-border rounded-lg outline-none
-                         focus:border-primary focus:ring-2 focus:ring-primary-light bg-white"
-            >
+              className="w-full px-3.5 py-3 text-[15px] bg-neutral-light/60 border border-neutral-border/50 rounded-xl outline-none
+                         focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all">
               <option value="">Select a patient...</option>
               {patients.map((p) => (
                 <option key={p.patient_id} value={p.patient_id}>{p.patient_name}</option>
@@ -134,62 +136,49 @@ export function EditAppointmentModal({
             </select>
           </div>
 
-          {/* Type */}
           <div>
-            <label className="block text-sm font-medium text-neutral-dark mb-1.5">Appointment Type</label>
-            <select
-              value={formData.title}
+            <label htmlFor="edit_type" className="block text-[13px] font-semibold text-neutral-dark mb-1.5">Appointment Type</label>
+            <select id="edit_type" value={formData.title}
               onChange={(e) => update("title", e.target.value)}
-              className="w-full px-3 py-2.5 text-sm border border-neutral-border rounded-lg outline-none
-                         focus:border-primary focus:ring-2 focus:ring-primary-light bg-white"
-            >
+              className="w-full px-3.5 py-3 text-[15px] bg-neutral-light/60 border border-neutral-border/50 rounded-xl outline-none
+                         focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all">
               {APPOINTMENT_TYPES.map((t) => (
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>
           </div>
 
-          {/* Date & Time */}
           <div>
-            <label className="block text-sm font-medium text-neutral-dark mb-1.5">Date & Time</label>
-            <input
-              type="datetime-local"
-              required
-              value={formData.start}
+            <label htmlFor="edit_datetime" className="block text-[13px] font-semibold text-neutral-dark mb-1.5">Date & Time</label>
+            <input id="edit_datetime" type="datetime-local" required value={formData.start}
               onChange={(e) => update("start", e.target.value)}
-              className="w-full px-3 py-2.5 text-sm border border-neutral-border rounded-lg outline-none
-                         focus:border-primary focus:ring-2 focus:ring-primary-light"
-            />
+              className="w-full px-3.5 py-3 text-[15px] bg-neutral-light/60 border border-neutral-border/50 rounded-xl outline-none
+                         focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all" />
           </div>
 
-          {/* Duration */}
           <div>
-            <label className="block text-sm font-medium text-neutral-dark mb-1.5">Duration</label>
+            <label className="block text-[13px] font-semibold text-neutral-dark mb-1.5">Duration</label>
             <div className="grid grid-cols-4 gap-2">
               {DURATIONS.map((d) => (
-                <button
-                  key={d.minutes}
-                  type="button"
+                <button key={d.minutes} type="button"
                   onClick={() => update("duration", String(d.minutes))}
-                  className={`py-2 text-xs font-medium rounded-lg border transition-colors
+                  className={`pressable py-2.5 text-[13px] font-medium rounded-xl border transition-all
                     ${formData.duration === String(d.minutes)
-                      ? "bg-primary text-white border-primary"
-                      : "border-neutral-border text-neutral-gray hover:border-primary hover:text-primary"
-                    }`}
-                >
+                      ? "bg-primary text-white border-primary shadow-sm shadow-primary/20"
+                      : "border-neutral-border/50 text-neutral-gray"}`}>
                   {d.label}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-1">
+          <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-neutral-gray hover:text-neutral-dark">
+              className="pressable px-5 py-2.5 text-[14px] font-medium text-neutral-gray rounded-xl">
               Cancel
             </button>
             <button type="submit" disabled={isSubmitting}
-              className="px-4 py-2 text-sm font-semibold text-white rounded-lg bg-primary hover:bg-primary-dark disabled:opacity-60">
+              className="pressable px-5 py-2.5 text-[14px] font-semibold text-white rounded-xl bg-primary shadow-sm shadow-primary/20 disabled:opacity-60">
               {isSubmitting ? "Saving..." : "Save Changes"}
             </button>
           </div>

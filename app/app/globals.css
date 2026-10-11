@@ -177,3 +177,221 @@ button, a, [role="button"] {
     -webkit-backdrop-filter: none;
   }
 }
+
+/* ──────────────────────────────────────
+   FullCalendar — Apple-quality overrides
+   ────────────────────────────────────── */
+
+.fc-apple {
+  --fc-border-color: #E5E5EA;
+  --fc-today-bg-color: rgba(0, 122, 255, 0.04);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: #F2F2F7;
+  --fc-event-border-color: transparent;
+}
+
+.fc-apple .fc-toolbar {
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem !important;
+}
+
+.fc-apple .fc-toolbar-title {
+  font-size: 1.0625rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
+  color: #1C1C1E;
+}
+
+.fc-apple .fc-button {
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  border-radius: 0.625rem !important;
+  border: 1px solid #E5E5EA !important;
+  background: #FFFFFF !important;
+  color: #1C1C1E !important;
+  box-shadow: none !important;
+  text-transform: none !important;
+  transition: background 120ms, border-color 120ms;
+}
+
+.fc-apple .fc-button:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+.fc-apple .fc-button-active,
+.fc-apple .fc-button.fc-button-active {
+  background: #007AFF !important;
+  color: #FFFFFF !important;
+  border-color: #007AFF !important;
+}
+
+.fc-apple .fc-button-primary:not(:disabled):hover {
+  background: #F2F2F7 !important;
+  border-color: #D1D1D6 !important;
+  color: #1C1C1E !important;
+}
+
+.fc-apple .fc-button-active:hover {
+  background: #0062CC !important;
+  border-color: #0062CC !important;
+  color: #FFFFFF !important;
+}
+
+.fc-apple .fc-prev-button,
+.fc-apple .fc-next-button {
+  padding: 0.4rem 0.55rem !important;
+}
+
+.fc-apple .fc-col-header-cell {
+  padding: 0.6rem 0 !important;
+  background: transparent;
+  border-bottom: 1px solid #E5E5EA;
+}
+
+.fc-apple .fc-col-header-cell-cushion {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  color: #8E8E93 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-decoration: none !important;
+}
+
+.fc-apple .fc-daygrid-day-number,
+.fc-apple .fc-timegrid-slot-label-cushion {
+  font-size: 0.8125rem !important;
+  font-weight: 500;
+  color: #1C1C1E;
+  text-decoration: none !important;
+}
+
+.fc-apple .fc-timegrid-slot-label-cushion {
+  color: #8E8E93 !important;
+  font-size: 0.6875rem !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.fc-apple .fc-day-today .fc-daygrid-day-number {
+  background: #007AFF;
+  color: #FFFFFF !important;
+  border-radius: 50%;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.fc-apple .fc-timegrid-col.fc-day-today {
+  background: rgba(0, 122, 255, 0.03) !important;
+}
+
+.fc-apple .fc-daygrid-day.fc-day-today {
+  background: rgba(0, 122, 255, 0.03) !important;
+}
+
+.fc-apple .fc-timegrid-slot {
+  height: 3rem !important;
+  border-bottom: 1px solid rgba(229, 229, 234, 0.5);
+}
+
+.fc-apple .fc-timegrid-slot-minor {
+  border-top: none !important;
+}
+
+.fc-apple .fc-event {
+  border-radius: 0.5rem !important;
+  border: none !important;
+  padding: 0.2rem 0.45rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  line-height: 1.35;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 120ms, transform 120ms;
+}
+
+.fc-apple .fc-event:active {
+  transform: scale(0.98);
+}
+
+.fc-apple .fc-event .fc-event-time {
+  font-size: 0.6875rem !important;
+  font-weight: 600;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+
+.fc-apple .fc-event .fc-event-title {
+  font-weight: 500;
+}
+
+.fc-apple .fc-timegrid-event {
+  border-radius: 0.5rem !important;
+}
+
+.fc-apple .fc-timegrid-event .fc-event-main {
+  padding: 0.25rem 0.4rem !important;
+}
+
+.fc-apple .fc-scrollgrid {
+  border: none !important;
+}
+
+.fc-apple .fc-scrollgrid td,
+.fc-apple .fc-scrollgrid th {
+  border-color: rgba(229, 229, 234, 0.6) !important;
+}
+
+.fc-apple .fc-daygrid-more-link {
+  font-size: 0.6875rem !important;
+  font-weight: 600;
+  color: #007AFF !important;
+  text-decoration: none !important;
+}
+
+.fc-apple .fc-timegrid-now-indicator-line {
+  border-color: #FF3B30 !important;
+  border-width: 2px !important;
+}
+
+.fc-apple .fc-timegrid-now-indicator-arrow {
+  border-color: #FF3B30 !important;
+}
+
+.fc-apple .fc-popover {
+  border-radius: 0.75rem !important;
+  border: 1px solid #E5E5EA !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12) !important;
+  overflow: hidden;
+}
+
+.fc-apple .fc-popover-header {
+  background: #F2F2F7 !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+}
+
+@media (max-width: 640px) {
+  .fc-apple .fc-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .fc-apple .fc-toolbar-chunk {
+    display: flex;
+    justify-content: center;
+  }
+  .fc-apple .fc-toolbar-title {
+    text-align: center;
+    font-size: 1rem !important;
+  }
+  .fc-apple .fc-button {
+    padding: 0.35rem 0.6rem !important;
+    font-size: 0.75rem !important;
+  }
+}

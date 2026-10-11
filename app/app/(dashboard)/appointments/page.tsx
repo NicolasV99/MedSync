@@ -2,10 +2,10 @@ import { AppointmentCalendar } from "@/components/appointments/AppointmentCalend
 
 export default function AppointmentsPage() {
   return (
-    <div className="space-y-2">
+    <div className="max-w-6xl mx-auto space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-dark">Appointments</h1>
-        <p className="text-sm text-neutral-gray mt-1">
+        <h1 className="text-title text-neutral-dark">Appointments</h1>
+        <p className="text-caption text-neutral-gray mt-1">
           Schedule and manage patient appointments.
         </p>
       </div>
